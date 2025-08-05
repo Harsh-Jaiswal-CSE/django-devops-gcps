@@ -1,4 +1,5 @@
 name: CI/CD to GKE
+
 on:
   push:
     branches: [ "main" ]
@@ -6,10 +7,12 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Authenticate to Google Cloud
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -17,16 +20,20 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
+      # Configure Docker for GCR
       - name: Configure Docker
-        run: gcloud auth configure-docker gcr.io
+        run: gcloud auth configure-docker gcr.io --quiet
 
+      # Build and Push Docker Image
       - name: Build and Push Docker Image
         run: |
           IMAGE="gcr.io/${{ secrets.GCP_PROJECT }}/hello-django:${{ github.sha }}"
+          echo "Building image: $IMAGE"
           docker build -t $IMAGE .
           docker push $IMAGE
 
+      # Deploy to GKE
       - name: Deploy to GKE
         run: |
-          gcloud container clusters get-credentials hello-cluster --zone asia-south1-a
-          kubectl set image deployment/hello-django django=gcr.io/${{ secrets.GCP_PROJECT }}/hello-django:${{ github.sha }}
+          gcloud container clusters get-credentials hello-cluster --zone us-central1-a --project ${{ secrets.GCP_PROJECT }}
+          kubectl set image deployment/hello-django hello-django=gcr.io/${{ secrets.GCP_PROJECT }}/hello-django:${{ github.sha }}
