@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-django
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-django
+  template:
+    metadata:
+      labels:
+        app: hello-django
+    spec:
+      containers:
+      - name: django
+        image: gcr.io/devops-gcp-2025/hello-django:v1
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: django-secrets
+        volumeMounts:
+        - name: django-gcp-credentials
+          mountPath: /app/secrets
+          readOnly: true
+
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.33.6
+        command:
+        - "/cloud_sql_proxy"
+        - "-instances=devops-gcp-2025:us-central1:hello-postgres=tcp:5432"
+        - "-credential_file=/secrets/cloudsql/credentials.json"
+        securityContext:
+          runAsNonRoot: true
+        volumeMounts:
+        - name: cloudsql-instance-credentials
+          mountPath: /secrets/cloudsql
+          readOnly: true
+
+      volumes:
+      - name: django-gcp-credentials
+        secret:
+          secretName: django-secrets
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloud-sql-instance-credentials
