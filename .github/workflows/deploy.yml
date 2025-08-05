@@ -21,8 +21,9 @@ jobs:
           export_default_credentials: true
 
       # Configure Docker for GCR
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker gcr.io,us-central1-docker.pkg.dev
+      - name: Configure Docker for GCR + AR
+        run: |
+          gcloud auth configure-docker gcr.io,us-central1-docker.pkg.dev
 
       # Build and Push Docker Image
       - name: Build and Push Docker Image
