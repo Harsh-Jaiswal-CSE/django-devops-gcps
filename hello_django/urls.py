@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from hello.views import home
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home),
+    path("", views.hello_world),  # your hello world
+    path("upload/", views.upload_file, name="upload"),
 ]
 
